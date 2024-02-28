@@ -1,0 +1,105 @@
+' ファイル内の全ての「銘柄スライド」を個別のpptxファイルとして出力する関数
+'
+Public Sub SaveEashSlideAsSeparatePptx()
+
+    ' ***********************************************************
+    ' * 変数宣言
+    ' ***********************************************************
+    ' 以下の言葉が含まれているスライドを「銘柄スライド」とする
+    Dim brandWords() As Variant
+    brandWords = Array("銘柄コード", "ティッカー")
+
+    Dim pSlide As Slide
+    Dim pShape As Shape
+
+    ' Hashmapオブジェクトの作成(key:テキストボックスの位置、value:テキストボックスの文字)
+    Dim map As Object
+    Set map = CreateObject("Scripting.Dictionary")
+
+    
+    ' ***********************************************************
+    ' * メイン処理
+    ' ***********************************************************
+    ' ファイル内の「全スライド」をチェック開始
+    For Each pSlide In ActivePresentation.Slides
+        
+        ' スライド内の「全シェイプ」をチェック開始
+        For Each pShape In pSlide.Shapes
+            
+            ' シェイプがテキストボックスであれば…
+            If pShape.TextFrame.HasText Then
+                
+                ' テキストボックスの文字と、位置を記録しておく。
+                Dim text As String: text = pShape.TextFrame2.TextRange.text
+                Dim topLeftSum As Integer: topLeftSum = (pShape.top + pShape.Left)
+                If map.Exists(topLeftSum) = False Then
+                    map.Add topLeftSum, text
+                End If
+            End If
+        Next
+        
+        ' 銘柄スライドではない場合はファイル出力対象外
+        Dim items(): items = map.items()
+        Dim result As Boolean: result = partialMatchAny(items, brandWords)
+        If (result = False) Then
+            GoTo Skip
+        End If
+
+        ' 記録したテキストボックスのうち、もっとも左上にあるボックスを特定
+        Dim keys(): keys = map.keys()
+        Call sort(keys)
+    
+        ' そのボックスのテキストから「銘柄名」を取得
+        Dim brand As Variant
+        brand = map.Item(keys(0))
+        
+        ' 【ここから未実装！！！！】
+        ' ファイル名
+        Dim fileName As String: fileName = "yyyyMMdd_" & brand & ".pptx"
+        fileName = Replace(fileName, vbTab, "") ' タブは除いておく
+        fileName = Replace(fileName, vbCr, "") ' 改行は除いておく
+        Debug.Print fileName
+        
+        ' スライドとして保存
+        ' CurrentSlide.Export～
+        ' 【ここまで未実装！！！！】
+        
+Skip:
+        map.RemoveAll
+    Next
+    
+End Sub
+
+' 特定の文言を含むかどうか調べる関数
+Private Function partialMatchAny(arr As Variant, words As Variant)
+
+    Dim result As Boolean: result = False
+
+    For Each text In arr
+        For Each word In words
+            If text Like "*" & word & "*" Then
+                result = True
+                GoTo Continue
+            End If
+        Next
+    Next
+Continue:
+    partialMatchAny = result
+    
+End Function
+
+' 昇順に並び替える関数
+Private Sub sort(ByRef argAry() As Variant)
+    Dim vSwap As Variant
+    Dim i As Integer
+    Dim j As Integer
+    For i = UBound(argAry) To LBound(argAry) Step -1
+        For j = LBound(argAry) To i - 1
+            If argAry(j) > argAry(j + 1) Then
+                vSwap = argAry(j)
+                argAry(j) = argAry(j + 1)
+                argAry(j + 1) = vSwap
+            End If
+        Next j
+    Next i
+End Sub
