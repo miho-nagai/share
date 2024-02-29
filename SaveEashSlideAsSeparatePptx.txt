@@ -26,12 +26,12 @@ Public Sub SaveEashSlideAsSeparatePptx()
         ' スライド内の「全シェイプ」をチェック開始
         For Each pShape In pSlide.Shapes
             
-            ' シェイプがテキストボックスであれば…
-            If pShape.TextFrame.HasText Then
+            ' シェイプが（グループ化されていない）テキストボックスであれば…
+            If pShape.Type <> msoGroup And pShape.TextFrame.HasText Then
                 
                 ' テキストボックスの文字と、位置を記録しておく。
                 Dim text As String: text = pShape.TextFrame2.TextRange.text
-                Dim topLeftSum As Integer: topLeftSum = (pShape.top + pShape.Left)
+                Dim topLeftSum As Integer: topLeftSum = (pShape.Top + pShape.Left)
                 If map.Exists(topLeftSum) = False Then
                     map.Add topLeftSum, text
                 End If
@@ -103,3 +103,4 @@ Private Sub sort(ByRef argAry() As Variant)
         Next j
     Next i
 End Sub
+
